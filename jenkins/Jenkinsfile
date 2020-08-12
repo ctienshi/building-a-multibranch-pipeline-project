@@ -1,24 +1,6 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:6-alpine'
-            args '-p 3000:3000 -p 5000:5000'
-        }
-    }
-    environment {
-        CI = 'true'
-    }
+    agent any
     stages {
-        stage('Build') {
-            steps {
-                sh 'npm install'
-            }
-        }
-        stage('Test') {
-            steps {
-                sh './jenkins/scripts/test.sh'
-            }
-        }
         stage('Deliver for development') {
             when {
                 branch 'development'
@@ -29,14 +11,21 @@ pipeline {
                 sh './jenkins/scripts/kill.sh'
             }
         }
-        stage('Deploy for production') {
-            when {
-                branch 'production'
-            }
-            steps {
-                sh './jenkins/scripts/deploy-for-production.sh'
-                input message: 'Finished using the web site? (Click "Proceed" to continue)'
-                sh './jenkins/scripts/kill.sh'
+        stage('Build') {
+            parallel {
+                stage('Test') {
+                    steps {
+                        echo "Tests running"
+                        sleep 5
+                    }
+                 }
+
+                 stage('Test FINAL') {
+                     steps {
+                         echo "Tests finished"
+                         sleep 5
+                     }
+                  }
             }
         }
     }
