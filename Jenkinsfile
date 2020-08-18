@@ -1,7 +1,7 @@
 def stepsToRun = [:]
-
+def list = ["Test-1", "Test-2", "Test-3", "Test-4", "Test-5"]
 pipeline {
-    agent none
+    agent any
     stages {
         stage('Preparation') { steps {
                 echo "Starting"
@@ -40,13 +40,19 @@ def getStatus(name) {
 }
 
 def getNumberOfBuilds() {
-
+    return 3
 }
 
 def prepareStage(def name) {
     return {
         stage (name) {
             def status = ''
+            // Dynamic stage generation
+            for (int i = 0; i < getNumberOfBuilds(); i++) {
+                stage("Test") {
+                    echo "helppppp"
+                }
+            }
             stage("Deployment") {
                 script{
                     status = getStatus(name)
@@ -61,10 +67,10 @@ def prepareStage(def name) {
                         echo "Deployed"
                     }
                 }
-                echo "Deploying the product"
             }
 
             stage("Test running phase") {
+                def testsStatus = ''
                 if (getStatus(name) != 'SUCCESS') {
                     echo getStatus(name)
                     catchError(buildResult: status, stageResult: status) {
@@ -73,6 +79,7 @@ def prepareStage(def name) {
                 } else {
                     echo "Running tests"
                     sleep 1
+                    // TODO : use testsStatus for the buildResult and stageResult
                     catchError(buildResult: status, stageResult: status) {
                         echo "Finished"
                     }
