@@ -1,5 +1,4 @@
 def stepsToRun = [:]
-myVar = 'initial_value'
 
 pipeline {
     agent none
@@ -40,21 +39,25 @@ def getStatus(name) {
     }
 }
 
+def getNumberOfBuilds() {
+
+}
+
 def prepareStage(def name) {
-    var = 'SUCCESS'
     return {
         stage (name) {
+            def status = ''
             stage("Deployment") {
                 script{
-
+                    status = getStatus(name)
                 }
-                if (getStatus(name) != 'SUCCESS') {
-                    catchError(buildResult: getStatus(name), stageResult: getStatus(name)) {
-                        status = "FAILURE"
+
+                if (status != 'SUCCESS') {
+                    catchError(buildResult: status, stageResult: status) {
                         sh "exit 1"
                     }
                 } else {
-                    catchError(buildResult: getStatus(name), stageResult: getStatus(name)) {
+                    catchError(buildResult: status, stageResult: status) {
                         echo "Deployed"
                     }
                 }
@@ -64,14 +67,13 @@ def prepareStage(def name) {
             stage("Test running phase") {
                 if (getStatus(name) != 'SUCCESS') {
                     echo getStatus(name)
-                    catchError(buildResult: getStatus(name), stageResult: getStatus(name)) {
-                        status = "FAILURE"
+                    catchError(buildResult: status, stageResult: status) {
                         sh "exit 1"
                     }
                 } else {
                     echo "Running tests"
                     sleep 1
-                    catchError(buildResult: getStatus(name), stageResult: getStatus(name)) {
+                    catchError(buildResult: status, stageResult: status) {
                         echo "Finished"
                     }
                 }
