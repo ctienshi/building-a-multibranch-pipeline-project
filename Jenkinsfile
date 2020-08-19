@@ -1,5 +1,5 @@
 def stepsToRun = [:]
-def list = ["Test-1", "Test-2", "Test-3", "Test-4", "Test-5"]
+
 pipeline {
     agent any
     stages {
@@ -47,11 +47,14 @@ def prepareStage(def name) {
     return {
         stage (name) {
             def status = ''
+            def full_string = "/var/x /var/y /var/z"
+            def arr = full_string.split(" ")
             // Dynamic stage generation
-            for (int i = 0; i < getNumberOfBuilds(); i++) {
-                stage("Test") {
-                    echo "helppppp"
-                }
+            for (i in arr) {
+              stage("Test") {
+                  echo "helppppp"
+                  println "now got ${i}"
+              }
             }
             stage("Deployment") {
                 script{
