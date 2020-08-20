@@ -40,39 +40,59 @@ def getStatus(name) {
 }
 
 def getNumberOfBuilds() {
-    return 3
+    return "ActiveMQ RabbitMQ VFS"
 }
 
 def prepareStage(def name) {
     return {
         stage (name) {
             def status = ''
-            def full_string = "/var/x /var/y /var/z"
+            def full_string = getNumberOfBuilds()
             def arr = full_string.split(" ")
             // Dynamic stage generation
+            def dependencyNo = 0
+            def previousDependencyStatus = 'SUCCESS'
             for (i in arr) {
-              stage("Test") {
-                  echo "helppppp"
-                  println "now got ${i}"
+                stage("${i} Deployment" ) {
+                    if (previousDependencyStatus == 'SUCCESS') {
+                        echo "Deploying dependencies"
+                        println "now got ${i}"
+                        dependencyNo++
+                        echo "${dependencyNo}"
+                        echo "${arr.length}"
+//                         previousDependencyStatus = 'FAILURE'
+                    } else {
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            sh "exit 1"
+                        }
+                    }
               }
+              // if success increase dependencyNo
             }
-            stage("Deployment") {
+            stage("Product Deployment") {
                 script{
                     status = getStatus(name)
                 }
-
-                if (status != 'SUCCESS') {
-                    catchError(buildResult: status, stageResult: status) {
-                        sh "exit 1"
+                echo "${dependencyNo}"
+                if (arr.length == dependencyNo) {
+                // if dependencyNo = number of dependencies only run. Else fail stage
+                    if (status != 'SUCCESS') {
+                        catchError(buildResult: status, stageResult: status) {
+                            sh "exit 1"
+                        }
+                    } else {
+                        catchError(buildResult: status, stageResult: status) {
+                            echo "Deployed"
+                        }
                     }
                 } else {
-                    catchError(buildResult: status, stageResult: status) {
-                        echo "Deployed"
+                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                        sh "exit 1"
                     }
                 }
             }
 
-            stage("Test running phase") {
+            stage("Tests Running Phase") {
                 def testsStatus = ''
                 if (getStatus(name) != 'SUCCESS') {
                     echo getStatus(name)
